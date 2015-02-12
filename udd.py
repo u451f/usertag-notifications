@@ -19,7 +19,7 @@ def uddConnect():
 	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
 	return cursor
 
-# take a list of bugnumbers and usertags (tuples) and save them to a file
+# take a list of bugnumbers and usertags and save them to a file
 def saveState(data):
 	global filename
 	try:
@@ -41,13 +41,12 @@ def compareState(new):
 
 	# load old data string and convert it to a dictionary
 	try:
-		# fixme handle the case where the file does not exist.
 		with open(filename, 'r') as f:
 			old = f.read()
 		f.closed
 	except IOError as e:
 		errorHandler("Could not read state")
-		# attempt to create the file
+		# attempt to create an empty file
 		saveState("")
 
 	if len(old) > 0:
