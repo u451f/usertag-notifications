@@ -1,5 +1,11 @@
+#################################################
 ## Query UDD for new usertags
 ## To be run as a cronjob on alioth
+##
+## Copyright 2015 Ulrike Uhlig <u@451f.org>
+## Released under the GPLv=3
+## Made during rd9 of the GNOME Outreach program
+#################################################
 
 # global configuration
 filename = "usertags.state"
