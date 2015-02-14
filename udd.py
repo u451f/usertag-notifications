@@ -1,8 +1,8 @@
 #################################################
 ## Query UDD for new usertags
-## To be run as a cronjob on alioth
+## To be run as a cronjob on alioth: `crontab -e`
 ##
-## Copyright 2015 Ulrike Uhlig <u@451f.org>
+## Copyright 2015 u <u@451f.org>
 ## Released under the GPLv=3
 ## Made during rd9 of the GNOME Outreach program
 #################################################
@@ -12,7 +12,7 @@ filename = "usertags.state"
 user = "pkg-apparmor-team@lists.alioth.debian.org"
 bdourl = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
 usertagurl = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % user
-sender = "u@451f.org"
+sender = "sender@example.org"
 receiver = user
 
 # connect to UDD and get all bugs for a certain user
