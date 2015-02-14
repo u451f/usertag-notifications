@@ -1,11 +1,14 @@
-#################################################
-## Query UDD for new usertags
-## To be run as a cronjob on alioth: `crontab -e`
-##
-## Copyright 2015 u <u@451f.org>
-## Released under the GPLv=3
-## Made during rd9 of the GNOME Outreach program
-#################################################
+####################################################
+# Query the Debian Ultimate Database (UDD) for
+# new usertags on bugs and send email notifications
+# to the user.
+# To install a cronjob on alioth run `crontab -e`
+# Also see https://wiki.debian.org/AppArmor/Reportbug
+#####################################################
+# Copyright 2015 u <u@451f.org>
+# Released under the GPLv=3
+# Made during rd9 of the GNOME Outreach program
+#####################################################
 
 # global configuration
 filename = "usertags.state"
