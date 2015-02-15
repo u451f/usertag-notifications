@@ -31,6 +31,7 @@ def uddConnect():
 # take a list of bugnumbers and usertags and save them to a file
 def saveState(data):
 	global filename
+	filename = "./%s" % filename
 	try:
 		with open(filename, 'w') as f:
 			f.write(str(data))
@@ -45,6 +46,7 @@ def saveState(data):
 def compareState(new):
 	import ast
 	global bdourl, usertagurl, filename, sender, receiver
+	filename = "./%s" % filename
 	old = ""
 	data = {}
 
