@@ -24,9 +24,13 @@ def uddConnect():
 	import psycopg2
 	conn = psycopg2.connect("service=udd")
 	cursor = conn.cursor()
-	# select all usertagged bugs for our user
-	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
 	return cursor
+
+def bugInfo(bugid) :
+	cursor = uddConnect()
+	cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
+	for bug in cursor.fetchall():
+		return bug[0]
 
 # take a list of bugnumbers and usertags and save them to a file
 def saveState(data):
@@ -76,9 +80,10 @@ def compareState(new):
 		# compare the dictionaries
 		for bug in newdata:
 			if not bug in data:
+				title = bugInfo(bug[0])
 				print "%s with tag %s is unknown" % (bug[0], bug[1])
-				subject = "New usertag %s on bug #%s" % (bug[1], bug[0])
-				body = "%s%s\nSee all usertags: %s" % (bdourl, bug[0], usertagurl)
+				subject = "New usertag '%s' on bug #%s: '%s'" % (bug[1], bug[0], title)
+				body = "%s%s\n\nSee all usertags: %s" % (bdourl, bug[0], usertagurl)
 				sendMail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
 	saveState(new)
@@ -109,6 +114,8 @@ def errorHandler(msg):
 # __init__
 # construct current buglist for user and compare this to the current state
 cursor = uddConnect()
+# select all usertagged bugs for our user
+cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
 buglist = []
 for bug in cursor.fetchall():
 	buglist.append(bug)
