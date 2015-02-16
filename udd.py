@@ -20,7 +20,6 @@ receiver = user
 
 # connect to UDD and get all bugs for a certain user
 def uddConnect():
-	global user
 	import psycopg2
 	conn = psycopg2.connect("service=udd")
 	cursor = conn.cursor()
