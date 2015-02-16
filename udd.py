@@ -123,6 +123,6 @@ def errorHandler(msg):
 	sendMail(sender, receiver, subject, body)
 
 # __init__
-buglist = bugList()
 # construct current buglist for user and compare this to the current state
+buglist = bugList()
 compareState(buglist)
