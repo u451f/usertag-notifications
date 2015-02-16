@@ -26,6 +26,17 @@ def uddConnect():
 	cursor = conn.cursor()
 	return cursor
 
+# select all usertagged bugs for our user
+def bugList():
+	global user
+	cursor = uddConnect()
+	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
+	buglist = []
+	for bug in cursor.fetchall():
+		buglist.append(bug)
+	return buglist
+
+# get bug title
 def bugInfo(bugid) :
 	cursor = uddConnect()
 	cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
@@ -81,8 +92,8 @@ def compareState(new):
 		for bug in newdata:
 			if not bug in data:
 				title = bugInfo(bug[0])
-				print "%s with tag %s is unknown" % (bug[0], bug[1])
-				subject = "New usertag '%s' on bug #%s: '%s'" % (bug[1], bug[0], title)
+				#print "New usertag '%s' on bug #%s: %s" % (bug[1], bug[0], title)
+				subject = "New usertag '%s' on bug #%s: %s" % (bug[1], bug[0], title)
 				body = "%s%s\n\nSee all usertags: %s" % (bdourl, bug[0], usertagurl)
 				sendMail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
@@ -112,11 +123,6 @@ def errorHandler(msg):
 	sendMail(sender, receiver, subject, body)
 
 # __init__
+buglist = bugList()
 # construct current buglist for user and compare this to the current state
-cursor = uddConnect()
-# select all usertagged bugs for our user
-cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
-buglist = []
-for bug in cursor.fetchall():
-	buglist.append(bug)
 compareState(buglist)
