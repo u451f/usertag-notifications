@@ -15,7 +15,7 @@ filename = "usertags.state"
 user = "pkg-apparmor-team@lists.alioth.debian.org"
 bdourl = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
 usertagurl = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % user
-sender = "sender@example.org"
+sender = user
 receiver = user
 
 # connect to UDD and get all bugs for a certain user
