@@ -92,8 +92,8 @@ def compareState(new):
 		for bug in newdata:
 			if not bug in data:
 				title = bugInfo(bug[0])
-				#print "New usertag '%s' on bug #%s: %s" % (bug[1], bug[0], title)
-				subject = "New usertag '%s' on bug #%s: %s" % (bug[1], bug[0], title)
+				# print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+				subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				body = "%s%s\n\nSee all usertags: %s" % (bdourl, bug[0], usertagurl)
 				sendMail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
