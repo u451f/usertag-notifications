@@ -70,7 +70,7 @@ def read_statefile(state_filename):
 		return false
 
 # compare two datasets
-def compareState(old, new):
+def compare_state(old, new):
 	import ast
 	global bdo_url, usertag_url
 	data = {}
@@ -131,7 +131,7 @@ def send_error_mail(msg):
 # construct current buglist for team_email_address and compare this to the current state
 buglist = bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
-notifications = compareState(old_buglist, buglist)
+notifications = compare_state(old_buglist, buglist)
 if notifications:
 	print notification
 	send_team_notification(notifications)
