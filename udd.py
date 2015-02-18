@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ####################################################
 # Query the Debian Ultimate Database (UDD) for
 # new usertags on bugs and send email notifications
@@ -42,7 +43,7 @@ def get_bug_title(bugid) :
 		return bug[0]
 
 # take a list of bugnumbers and usertags and save them to a file
-def save_state(state_filename, data):
+def save_statefile(state_filename, data):
 	state_filename = "./%s" % state_filename
 	try:
 		with open(state_filename, 'w') as f:
@@ -65,15 +66,15 @@ def read_statefile(state_filename):
 	except IOError as e:
 		send_error_mail("Could not read state file.")
 		# attempt to create an empty file
-		save_state("")
+		save_statefile("")
 		return false
 
 # compare two datasets
 def compareState(old, new):
 	import ast
-	global bdo_url, usertag_url, sender, receiver
-	old = read_statefile(state_filename)
+	global bdo_url, usertag_url
 	data = {}
+	notifications = []
 
 	if len(old) > 0:
 		# if no error, convert old state string to dictionary
@@ -86,19 +87,21 @@ def compareState(old, new):
 		newdata = {}
 
 	if len(newdata) < 1:
-		send_error_mail("Could not retrieve new data.")
+		#send_error_mail("Could not retrieve new data.")
+		print "Could not retrieve new data"
+		return false
 	else:
 		# compare the dictionaries
 		for bug in newdata:
 			if not bug in data:
 				title = get_bug_title(bug[0])
-				notifications.append("usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title), "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
-				)
-	# in any case, we need to resave the current state
-	save_state(state_filename, new)
+				notifications.append(["usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title), "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)])
+	# in any case, we need to resave the current state, fixme: move this somewhere else
+	save_statefile(state_filename, new)
 	return notifications
 
 def send_team_notification(notifications):
+	global sender, receiver
 	for notification in notifications:
 		send_mail(sender, receiver, notification[0], notification[1])
 
@@ -128,4 +131,7 @@ def send_error_mail(msg):
 # construct current buglist for team_email_address and compare this to the current state
 buglist = bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
-compareState(oldbuglist, buglist)
+notifications = compareState(old_buglist, buglist)
+if notifications:
+	print notification
+	send_team_notification(notifications)
