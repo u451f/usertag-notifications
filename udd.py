@@ -35,7 +35,7 @@ def bug_list(team_email_address):
 	return buglist
 
 # get bug title
-def bugInfo(bugid) :
+def get_bug_title(bugid) :
 	cursor = udd_connect()
 	cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
 	for bug in cursor.fetchall():
@@ -54,23 +54,26 @@ def save_state(state_filename, data):
 
 	return True
 
-# compare two datasets
-def compareState(state_filename, new):
-	import ast
-	global bdo_url, usertag_url, sender, receiver
-	state_filename = "./%s" % state_filename
-	old = ""
-	data = {}
-
-	# load old data string and convert it to a dictionary
+# load old data string and convert it to a dictionary
+# @returns dictionary with old state
+def read_statefile(state_filename):
 	try:
 		with open(state_filename, 'r') as f:
 			old = f.read()
 		f.closed
+		return old
 	except IOError as e:
 		send_error_mail("Could not read state file.")
 		# attempt to create an empty file
 		save_state("")
+		return false
+
+# compare two datasets
+def compareState(old, new):
+	import ast
+	global bdo_url, usertag_url, sender, receiver
+	old = read_statefile(state_filename)
+	data = {}
 
 	if len(old) > 0:
 		# if no error, convert old state string to dictionary
@@ -88,12 +91,16 @@ def compareState(state_filename, new):
 		# compare the dictionaries
 		for bug in newdata:
 			if not bug in data:
-				title = bugInfo(bug[0])
-				subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
-				body = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
-				send_mail(sender, receiver, subject, body)
+				title = get_bug_title(bug[0])
+				notifications.append("usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title), "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
+				)
 	# in any case, we need to resave the current state
 	save_state(state_filename, new)
+	return notifications
+
+def send_team_notification(notifications):
+	for notification in notifications:
+		send_mail(sender, receiver, notification[0], notification[1])
 
 # send an email.
 def send_mail(sender, receiver, subject, text):
@@ -120,4 +127,5 @@ def send_error_mail(msg):
 # __init__
 # construct current buglist for team_email_address and compare this to the current state
 buglist = bug_list(team_email_address)
-compareState(state_filename, buglist)
+old_buglist = read_statefile(state_filename)
+compareState(oldbuglist, buglist)
