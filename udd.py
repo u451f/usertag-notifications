@@ -51,7 +51,7 @@ def save_state(data):
 			f.write(str(data))
 		f.closed
 	except IOError as e:
-		error_handler("Could not save state")
+		send_error_mail("Could not save state file.")
         	return False
 
 	return True
@@ -70,7 +70,7 @@ def compareState(new):
 			old = f.read()
 		f.closed
 	except IOError as e:
-		error_handler("Could not read state")
+		send_error_mail("Could not read state file.")
 		# attempt to create an empty file
 		save_state("")
 
@@ -85,13 +85,12 @@ def compareState(new):
 		newdata = {}
 
 	if len(newdata) < 1:
-		error_handler("Could not retrieve new data")
+		send_error_mail("Could not retrieve new data.")
 	else:
 		# compare the dictionaries
 		for bug in newdata:
 			if not bug in data:
 				title = bugInfo(bug[0])
-				# print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				body = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
 				send_mail(sender, receiver, subject, body)
@@ -115,11 +114,10 @@ def send_mail(sender, receiver, subject, text):
 	s.send_mail(receiver, [sender], msg.as_string())
 	s.quit()
 
-def error_handler(msg):
+def send_error_mail(msg):
 	global sender, receiver
-	subject = "Error"
-	body = "Could not process UDD query: %s" % msg
-	send_mail(sender, receiver, subject, body)
+	subject = "uddy.py caused an error"
+	send_mail(sender, receiver, subject, msg)
 
 # __init__
 # construct current buglist for team_email_address and compare this to the current state
