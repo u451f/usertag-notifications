@@ -26,8 +26,7 @@ def udd_connect():
 	return cursor
 
 # select all usertagged bugs for our user
-def bug_list():
-	global team_email_address
+def bug_list(team_email_address):
 	cursor = udd_connect()
 	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
 	buglist = []
@@ -43,8 +42,7 @@ def bugInfo(bugid) :
 		return bug[0]
 
 # take a list of bugnumbers and usertags and save them to a file
-def save_state(data):
-	global state_filename
+def save_state(state_filename, data):
 	state_filename = "./%s" % state_filename
 	try:
 		with open(state_filename, 'w') as f:
@@ -57,9 +55,9 @@ def save_state(data):
 	return True
 
 # compare two datasets
-def compareState(new):
+def compareState(state_filename, new):
 	import ast
-	global bdo_url, usertag_url, state_filename, sender, receiver
+	global bdo_url, usertag_url, sender, receiver
 	state_filename = "./%s" % state_filename
 	old = ""
 	data = {}
@@ -95,7 +93,7 @@ def compareState(new):
 				body = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
 				send_mail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
-	save_state(new)
+	save_state(state_filename, new)
 
 # send an email.
 def send_mail(sender, receiver, subject, text):
@@ -121,5 +119,5 @@ def send_error_mail(msg):
 
 # __init__
 # construct current buglist for team_email_address and compare this to the current state
-buglist = bug_list()
-compareState(buglist)
+buglist = bug_list(team_email_address)
+compareState(state_filename, buglist)
