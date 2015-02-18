@@ -6,19 +6,19 @@
 # Also see https://wiki.debian.org/AppArmor/Reportbug
 #####################################################
 # Copyright 2015 u <u@451f.org>
-# Released under the GPLv=3
+# Released under the GPLv3
 # Made during rd9 of the GNOME Outreach program
 #####################################################
 
 # global configuration
-filename = "usertags.state"
-user = "pkg-apparmor-team@lists.alioth.debian.org"
-bdourl = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
-usertagurl = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % user
-sender = user
-receiver = user
+state_filename = "usertags.state"
+team_email_address = "pkg-apparmor-team@lists.alioth.debian.org"
+bdo_url = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
+usertag_url = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % team_email_address
+sender = team_email_address
+receiver = team_email_address
 
-# connect to UDD and get all bugs for a certain user
+# connect to UDD
 def uddConnect():
 	import psycopg2
 	conn = psycopg2.connect("service=udd")
@@ -27,9 +27,9 @@ def uddConnect():
 
 # select all usertagged bugs for our user
 def bugList():
-	global user
+	global team_email_address
 	cursor = uddConnect()
-	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % user)
+	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
 	buglist = []
 	for bug in cursor.fetchall():
 		buglist.append(bug)
@@ -44,10 +44,10 @@ def bugInfo(bugid) :
 
 # take a list of bugnumbers and usertags and save them to a file
 def saveState(data):
-	global filename
-	filename = "./%s" % filename
+	global state_filename
+	state_filename = "./%s" % state_filename
 	try:
-		with open(filename, 'w') as f:
+		with open(state_filename, 'w') as f:
 			f.write(str(data))
 		f.closed
 	except IOError as e:
@@ -59,14 +59,14 @@ def saveState(data):
 # compare two datasets
 def compareState(new):
 	import ast
-	global bdourl, usertagurl, filename, sender, receiver
-	filename = "./%s" % filename
+	global bdo_url, usertag_url, state_filename, sender, receiver
+	state_filename = "./%s" % state_filename
 	old = ""
 	data = {}
 
 	# load old data string and convert it to a dictionary
 	try:
-		with open(filename, 'r') as f:
+		with open(state_filename, 'r') as f:
 			old = f.read()
 		f.closed
 	except IOError as e:
@@ -93,7 +93,7 @@ def compareState(new):
 				title = bugInfo(bug[0])
 				# print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
-				body = "%s%s\n\nSee all usertags: %s" % (bdourl, bug[0], usertagurl)
+				body = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
 				sendMail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
 	saveState(new)
@@ -122,6 +122,6 @@ def errorHandler(msg):
 	sendMail(sender, receiver, subject, body)
 
 # __init__
-# construct current buglist for user and compare this to the current state
+# construct current buglist for team_email_address and compare this to the current state
 buglist = bugList()
 compareState(buglist)
