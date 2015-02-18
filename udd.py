@@ -19,16 +19,16 @@ sender = team_email_address
 receiver = team_email_address
 
 # connect to UDD
-def uddConnect():
+def udd_connect():
 	import psycopg2
 	conn = psycopg2.connect("service=udd")
 	cursor = conn.cursor()
 	return cursor
 
 # select all usertagged bugs for our user
-def bugList():
+def bug_list():
 	global team_email_address
-	cursor = uddConnect()
+	cursor = udd_connect()
 	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
 	buglist = []
 	for bug in cursor.fetchall():
@@ -37,13 +37,13 @@ def bugList():
 
 # get bug title
 def bugInfo(bugid) :
-	cursor = uddConnect()
+	cursor = udd_connect()
 	cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
 	for bug in cursor.fetchall():
 		return bug[0]
 
 # take a list of bugnumbers and usertags and save them to a file
-def saveState(data):
+def save_state(data):
 	global state_filename
 	state_filename = "./%s" % state_filename
 	try:
@@ -51,7 +51,7 @@ def saveState(data):
 			f.write(str(data))
 		f.closed
 	except IOError as e:
-		errorHandler("Could not save state")
+		error_handler("Could not save state")
         	return False
 
 	return True
@@ -70,9 +70,9 @@ def compareState(new):
 			old = f.read()
 		f.closed
 	except IOError as e:
-		errorHandler("Could not read state")
+		error_handler("Could not read state")
 		# attempt to create an empty file
-		saveState("")
+		save_state("")
 
 	if len(old) > 0:
 		# if no error, convert old state string to dictionary
@@ -85,7 +85,7 @@ def compareState(new):
 		newdata = {}
 
 	if len(newdata) < 1:
-		errorHandler("Could not retrieve new data")
+		error_handler("Could not retrieve new data")
 	else:
 		# compare the dictionaries
 		for bug in newdata:
@@ -94,12 +94,12 @@ def compareState(new):
 				# print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
 				body = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
-				sendMail(sender, receiver, subject, body)
+				send_mail(sender, receiver, subject, body)
 	# in any case, we need to resave the current state
-	saveState(new)
+	save_state(new)
 
 # send an email.
-def sendMail(sender, receiver, subject, text):
+def send_mail(sender, receiver, subject, text):
 	# Import smtplib for the actual sending function and mail modules
 	import smtplib
 	from email.mime.text import MIMEText
@@ -112,16 +112,16 @@ def sendMail(sender, receiver, subject, text):
 
 	# Send the message via our local SMTP server
 	s = smtplib.SMTP('localhost')
-	s.sendmail(receiver, [sender], msg.as_string())
+	s.send_mail(receiver, [sender], msg.as_string())
 	s.quit()
 
-def errorHandler(msg):
+def error_handler(msg):
 	global sender, receiver
 	subject = "Error"
 	body = "Could not process UDD query: %s" % msg
-	sendMail(sender, receiver, subject, body)
+	send_mail(sender, receiver, subject, body)
 
 # __init__
 # construct current buglist for team_email_address and compare this to the current state
-buglist = bugList()
+buglist = bug_list()
 compareState(buglist)
