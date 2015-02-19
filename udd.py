@@ -90,34 +90,31 @@ def compare_state(old_state, new_state):
 		print "No new data."
 		return false
 	else:
-		# compare old state data and new state data 
+		# compare old state data and new state data
 		for bug in new_state_data:
 			if not bug in old_state_data:
 				added_usertags.append(bug)
-		return added_usertags
-'''
+
 		for bug in old_state_data:
 			if not bug in new_state_data:
 				deleted_usertags.append(bug)
-		return deleted_usertags
-'''
+
+		return added_usertags, deleted_usertags
 
 # operation = add | delete
-def construct_notification(bug_list, operation, bdo_url, usertag_url):
+def send_team_notification(bug_list, diff, bdo_url, usertag_url):
+	global sender, receiver
 	notifications = []
 	for bug in bug_list:
 		title = get_bug_title(bug[0])
-		print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+		print "usertag '%s' %s on bug #%s: %s" % (bug[1], diff, bug[0], title)
 		# construct notification list
-		notification_subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+		notification_subject = "usertag '%s' %s on bug #%s: %s" % (bug[1], diff, bug[0], title)
 		notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
 		notifications.append([notification_subject, notification_msg])
-	return notifications
-
-def send_team_notification(notification_subject, notification_msg):
-	global sender, receiver
-	for notification in notifications:
-		send_mail(sender, receiver, notification_subject, notification_title)
+	if notifications:
+		for notification in notifications:
+			send_mail(sender, receiver, notification[0], notification[1])
 
 # send an email.
 def send_mail(sender, receiver, subject, text):
@@ -133,7 +130,7 @@ def send_mail(sender, receiver, subject, text):
 
 	# Send the message via our local SMTP server
 	s = smtplib.SMTP('localhost')
-	s.send_mail(receiver, [sender], msg.as_string())
+	s.sendmail(receiver, [sender], msg.as_string())
 	s.quit()
 
 def send_error_mail(msg):
@@ -146,11 +143,8 @@ def send_error_mail(msg):
 current_buglist = get_bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
 if old_buglist and current_buglist:
-	added_usertags = compare_state(old_buglist, current_buglist)
-	notifications =  construct_notification(added_usertags, "add", bdo_url, usertag_url)
-	if notifications:
-		for notification in notifications:
-			print notification
-			#send_team_notification(notification[0], notification[1])
+	added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
+	send_team_notification(added_usertags, "added", bdo_url, usertag_url)
+	send_team_notification(deleted_usertags, "deleted", bdo_url, usertag_url)
 	# save the current state
 	save_statefile(state_filename, current_buglist)
