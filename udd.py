@@ -5,6 +5,7 @@
 # to the user.
 # To install a cronjob on alioth run `crontab -e`
 # Also see https://wiki.debian.org/AppArmor/Reportbug
+# and https://wiki.debian.org/UltimateDebianDatabase
 #####################################################
 # Copyright 2015 u <u@451f.org>
 # Released under the GPLv3
@@ -71,9 +72,9 @@ def read_statefile(state_filename):
 # compare two datasets
 def compare_state(old_state, new_state):
 	import ast
-	global bdo_url, usertag_url
 	old_state_data = {}
-	notifications = []
+	deleted_usertags = []
+	added_usertags = []
 
 	# convert old state string to dictionary
 	if len(old_state) > 0:
@@ -86,19 +87,32 @@ def compare_state(old_state, new_state):
 		new_state_data = {}
 
 	if len(new_state_data) < 1:
-		print "Could not retrieve new data."
+		print "No new data."
 		return false
 	else:
 		# compare old state data and new state data 
 		for bug in new_state_data:
 			if not bug in old_state_data:
-				title = get_bug_title(bug[0])
-				print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
-				# construct notification list
-				notification_subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
-				notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
-				notifications.append([notification_subject, notification_msg])
-		return notifications
+				added_usertags.append(bug)
+		return added_usertags
+'''
+		for bug in old_state_data:
+			if not bug in new_state_data:
+				deleted_usertags.append(bug)
+		return deleted_usertags
+'''
+
+# operation = add | delete
+def construct_notification(bug_list, operation, bdo_url, usertag_url):
+	notifications = []
+	for bug in bug_list:
+		title = get_bug_title(bug[0])
+		print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+		# construct notification list
+		notification_subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+		notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
+		notifications.append([notification_subject, notification_msg])
+	return notifications
 
 def send_team_notification(notification_subject, notification_msg):
 	global sender, receiver
@@ -132,7 +146,8 @@ def send_error_mail(msg):
 current_buglist = get_bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
 if old_buglist and current_buglist:
-	notifications = compare_state(old_buglist, current_buglist)
+	added_usertags = compare_state(old_buglist, current_buglist)
+	notifications =  construct_notification(added_usertags, "add", bdo_url, usertag_url)
 	if notifications:
 		for notification in notifications:
 			print notification
