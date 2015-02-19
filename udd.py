@@ -27,7 +27,7 @@ def udd_connect():
 	return cursor
 
 # select all usertagged bugs for our user
-def bug_list(team_email_address):
+def get_bug_list(team_email_address):
 	cursor = udd_connect()
 	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
 	buglist = []
@@ -44,7 +44,6 @@ def get_bug_title(bugid) :
 
 # take a list of bugnumbers and usertags and save them to a file
 def save_statefile(state_filename, data):
-	state_filename = "./%s" % state_filename
 	try:
 		with open(state_filename, 'w') as f:
 			f.write(str(data))
@@ -70,40 +69,41 @@ def read_statefile(state_filename):
 		return false
 
 # compare two datasets
-def compare_state(old, new):
+def compare_state(old_state, new_state):
 	import ast
 	global bdo_url, usertag_url
-	data = {}
+	old_state_data = {}
 	notifications = []
 
-	if len(old) > 0:
-		# if no error, convert old state string to dictionary
-		data = set(ast.literal_eval(old))
+	# convert old state string to dictionary
+	if len(old_state) > 0:
+		old_state_data = set(ast.literal_eval(old_state))
 
-	# convert new data to dictionary, so we can compare old and new
-	if len(new) > 0:
-		newdata = set(new)
+	# convert new state string to dictionary, so we can compare old and new
+	if len(new_state) > 0:
+		new_state_data = set(new_state)
 	else:
-		newdata = {}
+		new_state_data = {}
 
-	if len(newdata) < 1:
-		#send_error_mail("Could not retrieve new data.")
-		print "Could not retrieve new data"
+	if len(new_state_data) < 1:
+		print "Could not retrieve new data."
 		return false
 	else:
-		# compare the dictionaries
-		for bug in newdata:
-			if not bug in data:
+		# compare old state data and new state data 
+		for bug in new_state_data:
+			if not bug in old_state_data:
 				title = get_bug_title(bug[0])
-				notifications.append(["usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title), "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)])
-	# in any case, we need to resave the current state, fixme: move this somewhere else
-	save_statefile(state_filename, new)
-	return notifications
+				print "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+				# construct notification list
+				notification_subject = "usertag '%s' added on bug #%s: %s" % (bug[1], bug[0], title)
+				notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
+				notifications.append([notification_subject, notification_msg])
+		return notifications
 
-def send_team_notification(notifications):
+def send_team_notification(notification_subject, notification_msg):
 	global sender, receiver
 	for notification in notifications:
-		send_mail(sender, receiver, notification[0], notification[1])
+		send_mail(sender, receiver, notification_subject, notification_title)
 
 # send an email.
 def send_mail(sender, receiver, subject, text):
@@ -124,14 +124,18 @@ def send_mail(sender, receiver, subject, text):
 
 def send_error_mail(msg):
 	global sender, receiver
-	subject = "uddy.py caused an error"
+	subject = "udd.py caused an error"
 	send_mail(sender, receiver, subject, msg)
 
 # __init__
-# construct current buglist for team_email_address and compare this to the current state
-buglist = bug_list(team_email_address)
+# construct current buglist for team_email_address and compare it to the old saved state
+current_buglist = get_bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
-notifications = compare_state(old_buglist, buglist)
-if notifications:
-	print notification
-	send_team_notification(notifications)
+if old_buglist and current_buglist:
+	notifications = compare_state(old_buglist, current_buglist)
+	if notifications:
+		for notification in notifications:
+			print notification
+			#send_team_notification(notification[0], notification[1])
+	# save the current state
+	save_statefile(state_filename, current_buglist)
