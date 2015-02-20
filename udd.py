@@ -61,12 +61,12 @@ def read_statefile(state_filename):
         with open(state_filename, 'r') as f:
             old = f.read()
         f.closed
-        return old
     except IOError as e:
         send_error_mail("Could not read state file.")
         # attempt to create an empty file
         save_statefile("")
         return False
+    return old
 
 # compare two datasets
 def compare_state(old_state, new_state):
@@ -86,20 +86,20 @@ def compare_state(old_state, new_state):
     	new_state_data = {}
 
     if len(new_state_data) < 1:
-    	print "No new data."
+        # if there is no new data, return false
     	return False
-    else:
-    	# compare old state data and new state data for added usertags
-    	for bug in new_state_data:
-    		if not bug in old_state_data:
-    			added_usertags.append(bug)
 
-    	# compare old state data and new state data for deleted usertags
-    	for bug in old_state_data:
-    		if not bug in new_state_data:
-    			deleted_usertags.append(bug)
+    # compare old state data and new state data for added usertags
+    for bug in new_state_data:
+        if not bug in old_state_data:
+            added_usertags.append(bug)
 
-    	return added_usertags, deleted_usertags
+    # compare old state data and new state data for deleted usertags
+    for bug in old_state_data:
+        if not bug in new_state_data:
+            deleted_usertags.append(bug)
+
+    return added_usertags, deleted_usertags
 
 # send one email per bug to the team
 # @diff = added | deleted
