@@ -40,8 +40,7 @@ def get_bug_list(team_email_address):
 def get_bug_title(bugid) :
 	cursor = udd_connect()
 	cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
-	for bug in cursor.fetchall():
-		return bug[0]
+	return cursor.fetchone()
 
 # take a list of bugnumbers and usertags and save them to a file
 def save_statefile(state_filename, data):
