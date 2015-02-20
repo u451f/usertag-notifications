@@ -135,7 +135,7 @@ def send_mail(sender, receiver, subject, text):
     msg['From'] = sender
     msg['To'] = receiver
 
-    # Send the message via our local SMTP server
+    # Send the message
     s = smtplib.SMTP(smtp_server)
     s.sendmail(receiver, [sender], msg.as_string())
     s.quit()
