@@ -33,8 +33,7 @@ def get_bug_list(team_email_address):
 	cursor = udd_connect()
 	cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
 	buglist = []
-	for bug in cursor.fetchall():
-		buglist.append(bug)
+	buglist = cursor.fetchall()
 	return buglist
 
 # get bug title
