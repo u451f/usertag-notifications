@@ -31,25 +31,27 @@ def udd_connect():
 # select all usertagged bugs for our user
 def get_bug_list(team_email_address):
     cursor = udd_connect()
-    cursor.execute("SELECT id,tag from bugs_usertags WHERE email='%s' ORDER BY id" % team_email_address)
-    buglist = []
-    buglist = cursor.fetchall()
-    return buglist
+    cursor.execute("SELECT bugs_usertags.id, bugs_usertags.tag, title FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id WHERE email='%s' ORDER BY id" % team_email_address)
+    items = cursor.fetchall()
 
-# get bug title
-def get_bug_title(bugid) :
-    cursor = udd_connect()
-    cursor.execute("SELECT title from bugs WHERE id='%s'" % bugid)
-    return cursor.fetchone()
+    # construct the list using a dictionary so we can retrieve the keys later
+    buglist = []
+    for item in items:
+        bug = {'id': item[0], 'tag': item[1], 'title': item[2]}
+        buglist.append(bug)
+
+    return buglist
 
 # take a list of bugnumbers and usertags and save them to a file
 def save_statefile(state_filename, data):
+    import pickle
     try:
-        with open(state_filename, 'w') as f:
-            f.write(str(data))
-        f.closed
+        f = open(state_filename, 'wb')
+        # Pickle data ictionary using protocol 0.
+        pickle.dump(data, f)
+        f.close()
     except IOError as e:
-        send_error_mail("Could not save state file.")
+        # send_error_mail("Could not save state file.")
         return False
 
     return True
@@ -57,47 +59,40 @@ def save_statefile(state_filename, data):
 # load old data string and convert it to a dictionary
 # @returns dictionary with old state
 def read_statefile(state_filename):
+    import pprint, pickle
     try:
-        with open(state_filename, 'r') as f:
-            old = f.read()
-        f.closed
+        f = open(state_filename, 'rb')
+        old = pickle.load(f)
+        f.close()
     except IOError as e:
-        send_error_mail("Could not read state file.")
+        # send_error_mail("Could not read state file.")
         # attempt to create an empty file
-        save_statefile("")
+        save_statefile(state_filename, "[]")
         return False
+    
+    # pprint.pprint(old)
     return old
 
-# compare two datasets
-def compare_state(old_state, new_state):
-    import ast
-    old_state_data = {}
+# compare two lists of dictionaries
+def compare_state(old_state_data, new_state_data):
     deleted_usertags = []
     added_usertags = []
-
-    # convert old state string to dictionary
-    if len(old_state) > 0:
-    	old_state_data = set(ast.literal_eval(old_state))
-
-    # convert new state string to dictionary, so we can compare old and new
-    if len(new_state) > 0:
-    	new_state_data = set(new_state)
-    else:
-    	new_state_data = {}
 
     if len(new_state_data) < 1:
         # if there is no new data, return false
     	return False
 
     # compare old state data and new state data for added usertags
-    for bug in new_state_data:
-        if not bug in old_state_data:
-            added_usertags.append(bug)
+    for item in new_state_data:
+        for olditem in old_state_data:
+            if olditem['id'] == item['id'] and olditem['tag'] != item['tag']:
+                added_usertags.append(item)
 
     # compare old state data and new state data for deleted usertags
-    for bug in old_state_data:
-        if not bug in new_state_data:
-            deleted_usertags.append(bug)
+    for item in old_state_data:
+        for newitem in new_state_data:
+            if newitem['id'] == item['id'] and newitem['tag'] != item['tag']:
+                deleted_usertags.append(item)
 
     return added_usertags, deleted_usertags
 
@@ -108,10 +103,9 @@ def send_team_notification(bug_list, diff, bdo_url, usertag_url):
     notifications = []
     # construct notification text for each bug
     for bug in bug_list:
-    	title = get_bug_title(bug[0])
-    	print "usertag '%s' %s on bug #%s: %s" % (bug[1], diff, bug[0], title)
-    	notification_subject = "usertag '%s' %s on bug #%s: %s" % (bug[1], diff, bug[0], title)
-    	notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug[0], usertag_url)
+    	# print "usertag '%s' %s on bug #%s: %s" % (bug['tag'], diff, bug['id'], bug['title'])
+    	notification_subject = "usertag '%s' %s on bug #%s: %s" % (bug['tag'], diff, bug['id'], bug['title'])
+    	notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug['id'], usertag_url)
     	notifications.append([notification_subject, notification_msg])
     # send team notification
     if notifications:
@@ -148,6 +142,8 @@ def send_error_mail(msg):
 # __init__
 # construct current buglist for team_email_address and compare it to the old saved state
 current_buglist = get_bug_list(team_email_address)
+# initial save of current buglist
+# save_statefile(state_filename, current_buglist)
 old_buglist = read_statefile(state_filename)
 if old_buglist and current_buglist:
     # retrieve usertag diff
