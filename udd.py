@@ -66,10 +66,8 @@ def read_statefile(state_filename):
         f.close()
     except IOError as e:
         # send_error_mail("Could not read state file.")
-        # attempt to create an empty file
-        save_statefile(state_filename, "[]")
         return False
-    
+
     # pprint.pprint(old)
     return old
 
@@ -84,15 +82,13 @@ def compare_state(old_state_data, new_state_data):
 
     # compare old state data and new state data for added usertags
     for item in new_state_data:
-        for olditem in old_state_data:
-            if olditem['id'] == item['id'] and olditem['tag'] != item['tag']:
-                added_usertags.append(item)
+        if item in old_state_data:
+            added_usertags.append(item)
 
     # compare old state data and new state data for deleted usertags
     for item in old_state_data:
-        for newitem in new_state_data:
-            if newitem['id'] == item['id'] and newitem['tag'] != item['tag']:
-                deleted_usertags.append(item)
+        if item in new_state_data:
+            deleted_usertags.append(item)
 
     return added_usertags, deleted_usertags
 
@@ -142,11 +138,16 @@ def send_error_mail(msg):
 # construct current buglist for team_email_address and compare it to the old saved state
 current_buglist = get_bug_list(team_email_address)
 old_buglist = read_statefile(state_filename)
-if old_buglist and current_buglist:
+
+# attempt to save the file if there is not yet an old_buglist
+if current_buglist and not old_buglist:
+    save_statefile(state_filename, current_buglist)
+
+if current_buglist and old_buglist:
     # retrieve usertag diff
     added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
-    send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
     # send notification to the team
+    send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
     send_team_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
     # save the current state
     save_statefile(state_filename, current_buglist)
