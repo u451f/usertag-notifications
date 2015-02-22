@@ -47,7 +47,7 @@ def save_statefile(state_filename, data):
     import pickle
     try:
         f = open(state_filename, 'wb')
-        # Pickle data ictionary using protocol 0.
+        # Pickle data dictionary using protocol 0.
         pickle.dump(data, f)
         f.close()
     except IOError as e:
@@ -78,8 +78,8 @@ def compare_state(old_state_data, new_state_data):
     deleted_usertags = []
     added_usertags = []
 
+    # if there is no new data, exit
     if len(new_state_data) < 1:
-        # if there is no new data, return false
     	return False
 
     # compare old state data and new state data for added usertags
@@ -98,8 +98,7 @@ def compare_state(old_state_data, new_state_data):
 
 # send one email per bug to the team
 # @diff = added | deleted
-def send_team_notification(bug_list, diff, bdo_url, usertag_url):
-    global sender, receiver
+def send_team_notification(sender, receiver, bug_list, diff, bdo_url, usertag_url):
     notifications = []
     # construct notification text for each bug
     for bug in bug_list:
@@ -142,14 +141,12 @@ def send_error_mail(msg):
 # __init__
 # construct current buglist for team_email_address and compare it to the old saved state
 current_buglist = get_bug_list(team_email_address)
-# initial save of current buglist
-# save_statefile(state_filename, current_buglist)
 old_buglist = read_statefile(state_filename)
 if old_buglist and current_buglist:
     # retrieve usertag diff
     added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
-    send_team_notification(added_usertags, "added", bdo_url, usertag_url)
+    send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
     # send notification to the team
-    send_team_notification(deleted_usertags, "deleted", bdo_url, usertag_url)
+    send_team_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
     # save the current state
     save_statefile(state_filename, current_buglist)
