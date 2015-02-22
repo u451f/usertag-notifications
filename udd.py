@@ -82,12 +82,12 @@ def compare_state(old_state_data, new_state_data):
 
     # compare old state data and new state data for added usertags
     for item in new_state_data:
-        if item in old_state_data:
+        if item not in old_state_data:
             added_usertags.append(item)
 
     # compare old state data and new state data for deleted usertags
     for item in old_state_data:
-        if item in new_state_data:
+        if item not in new_state_data:
             deleted_usertags.append(item)
 
     return added_usertags, deleted_usertags
