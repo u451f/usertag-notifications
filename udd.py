@@ -22,22 +22,22 @@ receiver = team_email_address
 smtp_server = "localhost"
 
 def udd_connect():
-	"""
-	Connect to UDD.
-	@params: none
-	@returns: db cursor
-	"""
+    """
+    Connect to UDD.
+    @params: none
+    @returns: db cursor
+    """
     import psycopg2
     conn = psycopg2.connect("service=udd")
     cursor = conn.cursor()
     return cursor
 
 def get_bug_list(team_email_address):
-	"""
-	Select all usertagged bugs for our user. query the bug title at the same time. construct a bug list of one dictionary per bug.
-	@params: str(Debian BTS maintainer / team email address)
-	@returns: list of dictionaries
-	"""
+    """
+    Select all usertagged bugs for our user. query the bug title at the same time. construct a bug list of one dictionary per bug.
+    @params: str(Debian BTS maintainer / team email address)
+    @returns: list of dictionaries
+    """
     cursor = udd_connect()
     cursor.execute("SELECT bugs_usertags.id, bugs_usertags.tag, title FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id WHERE email='%s' ORDER BY id" % team_email_address)
     items = cursor.fetchall()
@@ -50,11 +50,11 @@ def get_bug_list(team_email_address):
     return buglist
 
 def save_statefile(state_filename, data):
-	"""
-	Use pickle to save the list of bugs to a file.
-	@params: str(state_filename), data = list of dictionaries
-	@returns: True on success, False on failure
-	"""
+    """
+    Use pickle to save the list of bugs to a file.
+    @params: str(state_filename), data = list of dictionaries
+    @returns: True on success, False on failure
+    """
     import pickle
     try:
         f = open(state_filename, 'wb')
@@ -67,12 +67,12 @@ def save_statefile(state_filename, data):
     return True
 
 def read_statefile(state_filename):
-	"""
-	Use pickle to read the list of bugs from a file.
-	For debugging the data, use pprint.
-	@params: str(state_filename)
-	@returns: list of dictionaries, False on read failure
-	"""
+    """
+    Use pickle to read the list of bugs from a file.
+    For debugging the data, use pprint.
+    @params: str(state_filename)
+    @returns: list of dictionaries, False on read failure
+    """
     # import pprint
     import pickle
     try:
@@ -87,17 +87,17 @@ def read_statefile(state_filename):
     return data
 
 def compare_state(old_state_data, new_state_data):
-	"""
-	Compare two lists of dictionaries.
-	@params: two lists of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
-	@returns: two lists of dictionaries
-	"""
+    """
+    Compare two lists of dictionaries.
+    @params: two lists of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+    @returns: two lists of dictionaries
+    """
     deleted_usertags = []
     added_usertags = []
 
     """ If there is no new data, exit."""
     if len(new_state_data) < 1:
-    	return False
+        return False
 
     """ Compare old state data and new state data for added usertags"""
     for item in new_state_data:
@@ -112,31 +112,31 @@ def compare_state(old_state_data, new_state_data):
     return added_usertags, deleted_usertags
 
 def send_team_notification(sender, receiver, bug_list, operation, bdo_url, usertag_url):
-	"""
-	Send one email per bug to the team.
-	@params: operation = str "added" | "deleted"
-			sender = email address
-			receiver = email address
-			bug_list = list of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
-			bdo_url = str
-			usertag_url = str
-	@returns: void
-	"""
+    """
+    Send one email per bug to the team.
+    @params: operation = str "added" | "deleted"
+    		sender = email address
+    		receiver = email address
+    		bug_list = list of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+    		bdo_url = str
+    		usertag_url = str
+    @returns: void
+    """
     for bug in bug_list:
-    	# print "usertag '%s' %s on bug #%s: %s" % (bug['tag'], operation, bug['id'], bug['title'])
+        # print "usertag '%s' %s on bug #%s: %s" % (bug['tag'], operation, bug['id'], bug['title'])
         notification_subject = "usertag '%s' %s on bug #%s: %s" % (bug['tag'], operation, bug['id'], bug['title'])
         notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug['id'], usertag_url)
         send_mail(sender, receiver, notification_subject, notification_msg)
 
 def send_mail(sender, receiver, subject, text):
-	"""
-	Send an email.
-	@params: str(sender) = email address
-			str(receiver) = email address
-			str(subject) = email body
-			str(text) = email test
-	@returns: void
-	"""
+    """
+    Send an email.
+    @params: str(sender) = email address
+    		str(receiver) = email address
+    		str(subject) = email body
+    		str(text) = email test
+    @returns: void
+    """
     """ Import smtplib for the actual sending function and mail modules """
     import smtplib
     from email.mime.text import MIMEText
@@ -144,7 +144,7 @@ def send_mail(sender, receiver, subject, text):
     """ Configure smtp_server """
     global smtp_server
     if not smtp_server:
-    	smtp_server = "localhost"
+        smtp_server = "localhost"
 
     """ Create message """
     msg = MIMEText(text)
@@ -158,12 +158,12 @@ def send_mail(sender, receiver, subject, text):
     s.quit()
 
 def send_error_mail(msg):
-	"""
-	Send error email.
-	@params: str(msg) = message text
-	@global: str(sender), str(receiver)
-	@returns: void
-	"""
+    """
+    Send error email.
+    @params: str(msg) = message text
+    @global: str(sender), str(receiver)
+    @returns: void
+    """
     global sender, receiver
     subject = "udd.py caused an error"
     send_mail(sender, receiver, subject, msg)
