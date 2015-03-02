@@ -11,14 +11,6 @@
 # Released under GPLv3
 # Made during rd9 of the GNOME Outreach program
 #####################################################
-
-""" Configuration """
-state_filename = "usertags.state"
-team_email_address = "pkg-apparmor-team@lists.alioth.debian.org"
-bdo_url = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
-usertag_url = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % team_email_address
-sender = team_email_address
-receiver = team_email_address
 smtp_server = "localhost"
 
 def udd_connect():
@@ -61,7 +53,7 @@ def save_statefile(state_filename, data):
         pickle.dump(data, f)
         f.close()
     except IOError as e:
-        # send_error_mail("Could not save state file.")
+        print e
         return False
 
     return True
@@ -80,7 +72,7 @@ def read_statefile(state_filename):
         data = pickle.load(f)
         f.close()
     except IOError as e:
-        # send_error_mail("Could not read state file.")
+        print e
         return False
 
     # pprint.pprint(old)
@@ -95,16 +87,16 @@ def compare_state(old_state_data, new_state_data):
     deleted_usertags = []
     added_usertags = []
 
-    """ If there is no new data, exit."""
+    # If there is no new data, exit.
     if len(new_state_data) < 1:
         return False
 
-    """ Compare old state data and new state data for added usertags"""
+    # Compare old state data and new state data for added usertags
     for item in new_state_data:
         if item not in old_state_data:
             added_usertags.append(item)
 
-    """ Compare old state data and new state data for deleted usertags"""
+    # Compare old state data and new state data for deleted usertags
     for item in old_state_data:
         if item not in new_state_data:
             deleted_usertags.append(item)
@@ -115,11 +107,11 @@ def send_team_notification(sender, receiver, bug_list, operation, bdo_url, usert
     """
     Send one email per bug to the team.
     @params: operation = str "added" | "deleted"
-    		sender = email address
-    		receiver = email address
-    		bug_list = list of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
-    		bdo_url = str
-    		usertag_url = str
+            sender = email address
+            receiver = email address
+            bug_list = list of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+            bdo_url = str
+            usertag_url = str
     @returns: void
     """
     for bug in bug_list:
@@ -132,53 +124,57 @@ def send_mail(sender, receiver, subject, text):
     """
     Send an email.
     @params: str(sender) = email address
-    		str(receiver) = email address
-    		str(subject) = email body
-    		str(text) = email test
+            str(receiver) = email address
+            str(subject) = email body
+            str(text) = email test
     @returns: void
     """
-    """ Import smtplib for the actual sending function and mail modules """
+    # Import smtplib for the actual sending function and mail modules
     import smtplib
     from email.mime.text import MIMEText
 
-    """ Configure smtp_server """
+    # Configure smtp_server
     global smtp_server
     if not smtp_server:
         smtp_server = "localhost"
 
-    """ Create message """
+    # Create message
     msg = MIMEText(text)
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = receiver
 
-    """Send the message"""
+    # Send the message
     s = smtplib.SMTP(smtp_server)
     s.sendmail(receiver, [sender], msg.as_string())
     s.quit()
 
-def send_error_mail(msg):
+def main():
     """
-    Send error email.
-    @params: str(msg) = message text
-    @global: str(sender), str(receiver)
+    Construct current buglist for team_email_address and compare it to the old saved state.
+    Attempt to save the file if there is not yet an old_buglist.
+    Retrieve usertag diff, then send notifications to the team and re-save the current state.
+    @params: none
     @returns: void
     """
-    global sender, receiver
-    subject = "udd.py caused an error"
-    send_mail(sender, receiver, subject, msg)
+    # Configuration
+    state_filename = "usertags.state"
+    team_email_address = "pkg-apparmor-team@lists.alioth.debian.org"
+    bdo_url = "https://bugs.debian.org/cgi-bin/bugreport.cgi?bug="
+    usertag_url = "https://udd.debian.org/cgi-bin/bts-usertags.cgi?user=%s" % team_email_address
+    sender = team_email_address
+    receiver = team_email_address
 
-""" Construct current buglist for team_email_address and compare it to the old saved state."""
-current_buglist = get_bug_list(team_email_address)
-old_buglist = read_statefile(state_filename)
+    current_buglist = get_bug_list(team_email_address)
+    old_buglist = read_statefile(state_filename)
 
-""" Attempt to save the file if there is not yet an old_buglist."""
-if not old_buglist:
-    save_statefile(state_filename, current_buglist)
+    if not old_buglist:
+        save_statefile(state_filename, current_buglist)
 
-""" Retrieve usertag diff, then send notifications to the team and re-save the current state."""
-if current_buglist and old_buglist:
-    added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
-    send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
-    send_team_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
-    save_statefile(state_filename, current_buglist)
+    if current_buglist and old_buglist:
+        added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
+        send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
+        send_team_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
+        save_statefile(state_filename, current_buglist)
+
+main()
