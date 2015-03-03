@@ -52,8 +52,7 @@ def save_statefile(state_filename, data):
         f = open(state_filename, 'wb')
         pickle.dump(data, f)
         f.close()
-    except IOError as e:
-        print e
+    except IOError:
         return False
 
     return True
@@ -71,8 +70,7 @@ def read_statefile(state_filename):
         f = open(state_filename, 'rb')
         data = pickle.load(f)
         f.close()
-    except IOError as e:
-        print e
+    except IOError:
         return False
 
     # pprint.pprint(old)
