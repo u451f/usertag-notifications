@@ -25,7 +25,7 @@ def udd_connect():
     cursor = conn.cursor()
     return cursor
 
-def get_bug_list(team_email_address):
+def get_current_buglist(team_email_address):
     """
     Select all usertagged bugs for our user. query the bug title at the
     same time. construct a bug list of one dictionary per bug.
@@ -163,7 +163,7 @@ def main():
     sender = team_email_address
     receiver = team_email_address
 
-    current_buglist = get_bug_list(team_email_address)
+    current_buglist = get_current_buglist(team_email_address)
     old_buglist = read_statefile(state_filename)
 
     if current_buglist:
