@@ -12,7 +12,7 @@
 # Made during rd9 of the GNOME Outreach program
 #####################################################
 
-SMTP_SERVER = "localhost"
+smtp_server = "localhost"
 
 def udd_connect():
     """
@@ -37,12 +37,8 @@ def get_bug_list(team_email_address):
                     FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id \
                     WHERE email='%s' ORDER BY id" % team_email_address)
 
-    buglist = []
-    for item in cursor.fetchall():
-        bug = {'id': item[0], 'tag': item[1], 'title': item[2]}
-        buglist.append(bug)
-
-    return buglist
+    return [ {'id': item[0], 'tag': item[1], 'title': item[2]} 
+        for item in cursor.fetchall() ]
 
 def save_statefile(state_filename, data):
     """
@@ -67,7 +63,7 @@ def read_statefile(state_filename):
     @params: str(state_filename)
     @returns: list of dictionaries, False on read failure
     """
-    # import pprint
+    #import pprint
     import pickle
     try:
         state_file = open(state_filename, 'rb')
@@ -76,7 +72,7 @@ def read_statefile(state_filename):
     except IOError:
         return False
 
-    # pprint.pprint(old)
+    #pprint.pprint(data)
     return data
 
 def compare_state(old_state_data, new_state_data):
@@ -135,7 +131,9 @@ def send_mail(sender, receiver, subject, text):
     # Import smtplib for the actual sending function and mail modules
     import smtplib
     from email.mime.text import MIMEText
-    global SMTP_SERVER
+    global smtp_server
+    if not smtp_server:
+        smtp_server = "localhost"
 
     # Create message
     msg = MIMEText(text)
@@ -144,7 +142,7 @@ def send_mail(sender, receiver, subject, text):
     msg['To'] = receiver
 
     # Send the message
-    smtp_mail = smtplib.SMTP(SMTP_SERVER)
+    smtp_mail = smtplib.SMTP(smtp_server)
     smtp_mail.sendmail(receiver, [sender], msg.as_string())
     smtp_mail.quit()
 
@@ -155,7 +153,7 @@ def main():
     an old_buglist. Retrieve usertag diff, then send notifications to
     the team and re-save the current state.
     @params: none
-    @returns: void
+    @returns: False on failure
     """
     # Configuration
     state_filename = "usertags.state"
@@ -168,13 +166,16 @@ def main():
     current_buglist = get_bug_list(team_email_address)
     old_buglist = read_statefile(state_filename)
 
-    if not old_buglist:
-        save_statefile(state_filename, current_buglist)
-
-    if current_buglist and old_buglist:
-        added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
-        send_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
-        send_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
-        save_statefile(state_filename, current_buglist)
+    if current_buglist:
+        if old_buglist:
+            added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
+            send_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
+            send_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
+            save_statefile(state_filename, current_buglist)
+        else: 
+            send_notification(sender, receiver, current_buglist, "added", bdo_url, usertag_url)
+            save_statefile(state_filename, current_buglist)
+    else:
+        return False
 
 main()
