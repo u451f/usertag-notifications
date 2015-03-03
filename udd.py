@@ -11,7 +11,8 @@
 # Released under GPLv3
 # Made during rd9 of the GNOME Outreach program
 #####################################################
-smtp_server = "localhost"
+
+SMTP_SERVER = "localhost"
 
 def udd_connect():
     """
@@ -26,16 +27,18 @@ def udd_connect():
 
 def get_bug_list(team_email_address):
     """
-    Select all usertagged bugs for our user. query the bug title at the same time. construct a bug list of one dictionary per bug.
+    Select all usertagged bugs for our user. query the bug title at the
+    same time. construct a bug list of one dictionary per bug.
     @params: str(Debian BTS maintainer / team email address)
     @returns: list of dictionaries
     """
     cursor = udd_connect()
-    cursor.execute("SELECT bugs_usertags.id, bugs_usertags.tag, title FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id WHERE email='%s' ORDER BY id" % team_email_address)
-    items = cursor.fetchall()
+    cursor.execute("SELECT bugs_usertags.id, bugs_usertags.tag, title \
+                    FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id \
+                    WHERE email='%s' ORDER BY id" % team_email_address)
 
     buglist = []
-    for item in items:
+    for item in cursor.fetchall():
         bug = {'id': item[0], 'tag': item[1], 'title': item[2]}
         buglist.append(bug)
 
@@ -49,9 +52,9 @@ def save_statefile(state_filename, data):
     """
     import pickle
     try:
-        f = open(state_filename, 'wb')
-        pickle.dump(data, f)
-        f.close()
+        state_file = open(state_filename, 'wb')
+        pickle.dump(data, state_file)
+        state_file.close()
     except IOError:
         return False
 
@@ -67,9 +70,9 @@ def read_statefile(state_filename):
     # import pprint
     import pickle
     try:
-        f = open(state_filename, 'rb')
-        data = pickle.load(f)
-        f.close()
+        state_file = open(state_filename, 'rb')
+        data = pickle.load(state_file)
+        state_file.close()
     except IOError:
         return False
 
@@ -79,7 +82,8 @@ def read_statefile(state_filename):
 def compare_state(old_state_data, new_state_data):
     """
     Compare two lists of dictionaries.
-    @params: two lists of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+    @params: two lists of dictionaries
+             ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
     @returns: two lists of dictionaries
     """
     deleted_usertags = []
@@ -101,21 +105,22 @@ def compare_state(old_state_data, new_state_data):
 
     return added_usertags, deleted_usertags
 
-def send_team_notification(sender, receiver, bug_list, operation, bdo_url, usertag_url):
+def send_notification(sender, receiver, bug_list, operation, bdo_url, usertag_url):
     """
     Send one email per bug to the team.
     @params: operation = str "added" | "deleted"
             sender = email address
             receiver = email address
-            bug_list = list of dictionaries ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+            bug_list = ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
             bdo_url = str
             usertag_url = str
     @returns: void
     """
     for bug in bug_list:
-        # print "usertag '%s' %s on bug #%s: %s" % (bug['tag'], operation, bug['id'], bug['title'])
-        notification_subject = "usertag '%s' %s on bug #%s: %s" % (bug['tag'], operation, bug['id'], bug['title'])
-        notification_msg = "%s%s\n\nSee all usertags: %s" % (bdo_url, bug['id'], usertag_url)
+        notification_subject = "usertag '%s' %s on bug #%s: %s" \
+                               % (bug['tag'], operation, bug['id'], bug['title'])
+        notification_msg = "%s%s\n\nSee all usertags: %s" \
+                           % (bdo_url, bug['id'], usertag_url)
         send_mail(sender, receiver, notification_subject, notification_msg)
 
 def send_mail(sender, receiver, subject, text):
@@ -130,11 +135,7 @@ def send_mail(sender, receiver, subject, text):
     # Import smtplib for the actual sending function and mail modules
     import smtplib
     from email.mime.text import MIMEText
-
-    # Configure smtp_server
-    global smtp_server
-    if not smtp_server:
-        smtp_server = "localhost"
+    global SMTP_SERVER
 
     # Create message
     msg = MIMEText(text)
@@ -143,15 +144,16 @@ def send_mail(sender, receiver, subject, text):
     msg['To'] = receiver
 
     # Send the message
-    s = smtplib.SMTP(smtp_server)
-    s.sendmail(receiver, [sender], msg.as_string())
-    s.quit()
+    smtp_mail = smtplib.SMTP(SMTP_SERVER)
+    smtp_mail.sendmail(receiver, [sender], msg.as_string())
+    smtp_mail.quit()
 
 def main():
     """
-    Construct current buglist for team_email_address and compare it to the old saved state.
-    Attempt to save the file if there is not yet an old_buglist.
-    Retrieve usertag diff, then send notifications to the team and re-save the current state.
+    Construct current buglist for team_email_address and compare it to
+    the old saved state. Attempt to save the file if there is not yet
+    an old_buglist. Retrieve usertag diff, then send notifications to
+    the team and re-save the current state.
     @params: none
     @returns: void
     """
@@ -171,8 +173,8 @@ def main():
 
     if current_buglist and old_buglist:
         added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
-        send_team_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
-        send_team_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
+        send_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
+        send_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
         save_statefile(state_filename, current_buglist)
 
 main()
