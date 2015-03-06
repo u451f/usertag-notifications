@@ -62,22 +62,6 @@ def compare_state(old_state_data, new_state_data):
 
     return added_usertags, deleted_usertags
 
-def save_statefile(state_filename, data):
-    """
-    Use pickle to save the list of bugs to a file.
-    @params: str(state_filename), data = list of dictionaries
-    @returns: True on success, False on failure
-    """
-    import pickle
-    try:
-        state_file = open(state_filename, 'wb')
-        pickle.dump(data, state_file)
-        state_file.close()
-    except IOError:
-        return False
-
-    return True
-
 def read_statefile(state_filename):
     """
     Use pickle to read the list of bugs from a file.
@@ -97,6 +81,21 @@ def read_statefile(state_filename):
     #pprint.pprint(data)
     return data
 
+def save_statefile(state_filename, data):
+    """
+    Use pickle to save the list of bugs to a file.
+    @params: str(state_filename), data = list of dictionaries
+    @returns: True on success, False on failure
+    """
+    import pickle
+    try:
+        state_file = open(state_filename, 'wb')
+        pickle.dump(data, state_file)
+        state_file.close()
+    except IOError:
+        return False
+
+    return True
 
 def send_notification(sender, receiver, bug_list, operation, bdo_url, usertag_url):
     """
