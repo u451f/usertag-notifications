@@ -1,17 +1,16 @@
 #!/usr/bin/env python
-####################################################
-# Query the Debian Ultimate Database (UDD) for
-# new usertags on bugs and send email notifications
-# to the user.
-# To install a cronjob on alioth run `crontab -e`
-# Also see https://wiki.debian.org/AppArmor/Reportbug
-# and https://wiki.debian.org/UltimateDebianDatabase
-#####################################################
-# Copyright 2015 u <u@451f.org>
-# Released under GPLv3
-# Made during rd9 of the GNOME Outreach program
-#####################################################
-
+""" Query the Debian Ultimate Database (UDD) for
+new usertags on bugs and send email notifications
+to the user.
+To install a cronjob on alioth run `crontab -e`
+Also see https://wiki.debian.org/AppArmor/Reportbug
+and https://wiki.debian.org/UltimateDebianDatabase
+....................................................
+Copyright 2015 u <u@451f.org>
+Released under GPLv3
+Made during rd9 of the GNOME Outreach program
+....................................................
+"""
 smtp_server = "localhost"
 
 def udd_connect():
@@ -37,8 +36,8 @@ def get_current_buglist(team_email_address):
                     FROM bugs_usertags JOIN bugs ON bugs_usertags.id = bugs.id \
                     WHERE email='%s' ORDER BY id" % team_email_address)
 
-    return [ {'id': item[0], 'tag': item[1], 'title': item[2]} 
-        for item in cursor.fetchall() ]
+    return [{'id': item[0], 'tag': item[1], 'title': item[2]} \
+	       for item in cursor.fetchall()]
 
 def save_statefile(state_filename, data):
     """
@@ -171,10 +170,10 @@ def main():
             added_usertags, deleted_usertags = compare_state(old_buglist, current_buglist)
             send_notification(sender, receiver, added_usertags, "added", bdo_url, usertag_url)
             send_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
-            save_statefile(state_filename, current_buglist)
-        else: 
+        else:
             send_notification(sender, receiver, current_buglist, "added", bdo_url, usertag_url)
-            save_statefile(state_filename, current_buglist)
+
+        save_statefile(state_filename, current_buglist)
     else:
         return False
 
