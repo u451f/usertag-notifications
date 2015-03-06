@@ -39,6 +39,29 @@ def get_current_buglist(team_email_address):
     return [{'id': item[0], 'tag': item[1], 'title': item[2]} \
 	       for item in cursor.fetchall()]
 
+def compare_state(old_state_data, new_state_data):
+    """
+    Compare two lists of dictionaries.
+    @params: two lists of dictionaries
+             ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
+    @returns: two lists of dictionaries
+    """
+    deleted_usertags = []
+    added_usertags = []
+
+    # If there is no new data, exit.
+    if len(new_state_data) > 0:
+        # Compare old state data and new state data for added usertags
+        for item in new_state_data:
+            if item not in old_state_data:
+                added_usertags.append(item)
+        # Compare old state data and new state data for deleted usertags
+        for item in old_state_data:
+            if item not in new_state_data:
+                deleted_usertags.append(item)
+
+    return added_usertags, deleted_usertags
+
 def save_statefile(state_filename, data):
     """
     Use pickle to save the list of bugs to a file.
@@ -74,41 +97,17 @@ def read_statefile(state_filename):
     #pprint.pprint(data)
     return data
 
-def compare_state(old_state_data, new_state_data):
-    """
-    Compare two lists of dictionaries.
-    @params: two lists of dictionaries
-             ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
-    @returns: two lists of dictionaries
-    """
-    deleted_usertags = []
-    added_usertags = []
-
-    # If there is no new data, exit.
-    if len(new_state_data) < 1:
-        return False
-
-    # Compare old state data and new state data for added usertags
-    for item in new_state_data:
-        if item not in old_state_data:
-            added_usertags.append(item)
-
-    # Compare old state data and new state data for deleted usertags
-    for item in old_state_data:
-        if item not in new_state_data:
-            deleted_usertags.append(item)
-
-    return added_usertags, deleted_usertags
 
 def send_notification(sender, receiver, bug_list, operation, bdo_url, usertag_url):
     """
     Send one email per bug to the team.
-    @params: operation = str "added" | "deleted"
-            sender = email address
-            receiver = email address
+    @params:
+            sender = str(email address)
+            receiver = str(email address)
             bug_list = ({'id': '123', 'tag': 'the_tag', 'title': 'The Title'})
-            bdo_url = str
-            usertag_url = str
+	        operation = str ("added" or "deleted")
+            bdo_url = str(url)
+            usertag_url = str(url)
     @returns: void
     """
     for bug in bug_list:
@@ -172,7 +171,6 @@ def main():
             send_notification(sender, receiver, deleted_usertags, "deleted", bdo_url, usertag_url)
         else:
             send_notification(sender, receiver, current_buglist, "added", bdo_url, usertag_url)
-
         save_statefile(state_filename, current_buglist)
     else:
         return False
