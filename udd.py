@@ -10,6 +10,9 @@ Copyright 2015 u <u@451f.org>
 Released under GPLv3
 Made during rd9 of the GNOME Outreach program
 ....................................................
+The code now also lives here and might be more up-to-date:
+https://alioth.debian.org/scm/browser.php?group_id=100952
+....................................................
 """
 smtp_server = "localhost"
 
