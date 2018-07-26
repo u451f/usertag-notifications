@@ -10,7 +10,7 @@ and https://wiki.debian.org/UltimateDebianDatabase
 
 
 The code now also lives here and might be more up-to-date:
-https://alioth.debian.org/scm/browser.php?group_id=100952
+https://salsa.debian.org/apparmor-team/usertag-notifications
 
 
 Copyright 2015 u <u@451f.org>
