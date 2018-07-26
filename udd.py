@@ -11,7 +11,7 @@ Released under GPLv3
 Made during rd9 of the GNOME Outreach program
 ....................................................
 The code now also lives here and might be more up-to-date:
-https://alioth.debian.org/scm/browser.php?group_id=100952
+https://salsa.debian.org/apparmor-team/usertag-notifications
 ....................................................
 """
 smtp_server = "localhost"
